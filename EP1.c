@@ -1,31 +1,20 @@
 #include <readline/readline.h>
 #include <readline/history.h>
-#include <unistd.h>
+#include <unistd.h> //Para o getcwd
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
-char cwd[PATH_MAX];
+#include <limits.h> // Para o PATH_MAX
 
-char *usuario() {
-  if (getcwd(cwd, sizeof(cwd)) != NULL) {
-      // printf("Current working dir: %s\n", cwd);
-      return cwd;
-  } 
-  else {
-      perror("getcwd() error");
-      return "";
-  }
-}
-
-char *type_prompt()
+/*Função que printa o user e o PATH; e lê o que o usuario digita */
+char* type_prompt(char* usuario)
 {
 	char *line;
-	line = readline(usuario());
+	line = readline(usuario);
 	//printf("%s",line);
 	return line;
 }
 
-char **comando(char *line, int * args)
+char** comando(char *line, int * args)
 {
 	char **comando,*c;
 	comando = malloc(5*sizeof(char*));
@@ -46,12 +35,27 @@ char **comando(char *line, int * args)
 }
 
 int main()
-{ 
+{
+  /*Pegando o o diretorio atual*/
+  char cwd[PATH_MAX];
+  if (getcwd(cwd, sizeof(cwd)) == NULL) {
+    perror("getcwd() error");
+    return 1;
+  }
+  /*Pegando o nome de usuário*/
+  char *user = getenv("USER");
+
+  /*Vetor 'usuario' que indica o user e o diretorio atual*/
+  int tam = 5 + strlen(cwd)+strlen(user);
+  char usuario[tam];
+  snprintf(usuario, tam, "{%s@%s} ", user, cwd);
+
 	char *line,**commands;
 	int args;
 	while(1)
 	{
-		line = type_prompt();
+    /*Acrescentei o vetor 'usuario' na chamada do prompt*/
+		line = type_prompt(usuario);
 		//commands = comando(line,&args);
 		//for(int i = 0; commands[i] != NULL; i++) printf("%s\n",commands[i]);
 
