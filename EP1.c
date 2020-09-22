@@ -3,6 +3,9 @@
 #include <unistd.h> /*Para o getcwd*/
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <signal.h>
 #include <limits.h> /* Para o PATH_MAX*/
 
 /*Função que printa o user e o PATH; e lê o que o usuario digita */
@@ -36,6 +39,35 @@ char** comando(char *line, int * args)
 	return comando;
 }
 
+/* Essa funcao le o comando digitado pelo usuario e atraves de syscalls realiza o que o usuario deseja*/
+
+void read_commad(char **commands)
+{
+	if(!strcmp(commands[0],"mkdir"))
+	{
+		int exist;
+		exist = mkdir(commands[1],0777);
+		if(exist) printf("Diretorio ja existe\n"); 
+		return;
+	}
+
+	if(!strcmp(commands[0],"kill"))
+	{
+		int sucess;
+		sucess = kill((pid_t)atoi(commands[2]),SIGKILL);
+		if(sucess == -1) printf("Operacao invalida\n");
+		return;
+	}
+
+	if(!strcmp(commands[0],"ln"))
+	{
+		int sucess;
+		sucess = symlink(commands[2],commands[3]);
+		if(sucess == -1) printf("Falha ao criar link sibolico\n");
+		return;
+	}
+}
+
 int main()
 {
   /*Pegando o o diretorio atual*/
@@ -54,13 +86,13 @@ int main()
 
 	char *line,**commands;
 	int args;
+
 	while(1)
 	{
     /*Acrescentei o vetor 'usuario' na chamada do prompt*/
 		line = type_prompt(usuario);
-		/*commands = comando(line,&args);*/
-		/*for(int i = 0; commands[i] != NULL; i++) printf("%s\n",commands[i]);*/
-
+		commands = comando(line,&args);
+		read_commad(commands);
 		//printf("%s\n");
 		/*for(int i = 0; i < args; i++) free(commands[i]);*/
 		/*printf("%s\n",a);*/
