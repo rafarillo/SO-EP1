@@ -47,7 +47,7 @@ void read_commad(char **commands)
 	{
 		int exist;
 		exist = mkdir(commands[1],0777);
-		if(exist) printf("Diretorio ja existe\n"); 
+		if(exist) printf("Diretorio ja existe\n");
 		return;
 	}
 
@@ -63,7 +63,7 @@ void read_commad(char **commands)
 	{
 		int sucess;
 		sucess = symlink(commands[2],commands[3]);
-		if(sucess == -1) printf("Falha ao criar link sibolico\n");
+		if(sucess == -1) printf("Falha ao criar link simbolico\n");
 		return;
 	}
 }
