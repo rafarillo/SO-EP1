@@ -1,3 +1,5 @@
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <unistd.h> /*Para o getcwd*/
@@ -19,16 +21,19 @@ char* type_prompt(char* usuario)
 
 /* Essa função separa o linha digitada no bccshell e separa em um vetor onde a posição 0 representa o comando
  e as outras posições os parametros para ese comando*/
-char* comando(char *line, int * args, char **argumentos)
+char** comando(char *line, int * args)
 {
-	char *comando,*c;
+	char **comando,*c;
+	comando = malloc(5*sizeof(char*));
 	int arg = 0;
 	c = strtok(line," ");
-	comando = c;
+	for(int i = 0; i < 5; i++)
+		comando[i] = NULL;
+	comando[arg++] = c;
 	/*printf("%s\n",comando[0]);*/
 	while((c =strtok(NULL," ")) != NULL )
 	{
-		argumentos[arg] = c;
+		comando[arg] = c;
 		/*printf("%s\n",comando[arg]);*/
 		arg++;
 	}
@@ -38,30 +43,40 @@ char* comando(char *line, int * args, char **argumentos)
 
 /* Essa funcao le o comando digitado pelo usuario e atraves de syscalls realiza o que o usuario deseja*/
 
-void read_commad(char *commands, char *argumentos[])
+void read_commad(char **commands)
 {
-	if(!strcmp(commands,"mkdir"))
+	if(!strcmp(commands[0],"mkdir"))
 	{
 		int exist;
-		exist = mkdir(argumentos[0],0777);
+		exist = mkdir(commands[1],0777);
 		if(exist) printf("Diretorio ja existe\n");
 		return;
 	}
 
-	if(!strcmp(commands,"kill"))
+	if(!strcmp(commands[0],"kill"))
 	{
 		int sucess;
-		sucess = kill((pid_t)atoi(argumentos[1]),SIGKILL);
+		sucess = kill((pid_t)atoi(commands[2]),SIGKILL);
 		if(sucess == -1) printf("Operacao invalida\n");
 		return;
 	}
 
-	if(!strcmp(commands,"ln"))
+	if(!strcmp(commands[0],"ln"))
 	{
 		int sucess;
-		sucess = symlink(argumentos[1],argumentos[2]);
+		sucess = symlink(commands[2],commands[3]);
 		if(sucess == -1) printf("Falha ao criar link simbolico\n");
 		return;
+	}
+
+	if(fork() != 0)
+	{
+		waitpid(-1,NULL,0);
+	}
+
+	else
+	{
+		execve(commands[0],commands,0);
 	}
 }
 
@@ -81,15 +96,18 @@ int main()
   char usuario[tam];
   snprintf(usuario, tam, "{%s@%s} ", user, cwd);
 
-	char *line,*commands,*argumentos[4];
+	char *line,**commands;
 	int args;
+
+	using_history();
 
 	while(1)
 	{
     /*Acrescentei o vetor 'usuario' na chamada do prompt*/
 		line = type_prompt(usuario);
-		commands = comando(line,&args,argumentos);
-		read_commad(commands,argumentos);
+		add_history(line);
+		commands = comando(line,&args);
+		read_commad(commands);
 		//printf("%s\n");
 		/*for(int i = 0; i < args; i++) free(commands[i]);*/
 		/*printf("%s\n",a);*/

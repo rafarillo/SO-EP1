@@ -3,11 +3,11 @@ CC = gcc
 RM = rm 
 #-------------------------------------------------
 
-bccshell: EP1.o
-	$(CC)  EP1.o -lreadline -o bccshell
+bccsh: bccsh.o
+	$(CC)  bccsh.o -lreadline -o bccsh
 
-EP1.o: EP1.c
-	$(CC) $(CFLAGS) -c EP1.c
+bccsh.o: bccsh.c
+	$(CC) $(CFLAGS) -c bccsh.c
 
 clean:
 	$(RM) *.o *~
