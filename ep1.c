@@ -1,20 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-
-typedef struct processo
-{
-	char nome[5];
-	int t0, dt, deadline;
-
-}Processo;
+#include "process.h"
 
 int main(int argc, char const *argv[])
 {
 	FILE *p = fopen(argv[2],"r");
-	char line[100];
-	Processo *ps;
-	ps = malloc(10*sizeof(Processo));
+	data processo;
 	if(argc < 4)
 	{
 		printf("Numero invalido de argumentos\n");
@@ -25,9 +17,16 @@ int main(int argc, char const *argv[])
 		printf("Ocorreu erro na leitura\n");
 		exit(1);
 	}
-	while(fgets(line,100,p) != NULL)
-	{
-		printf("%s",line);
 
-	}
+	while(!feof(p))
+		{
+			fscanf(p,"%s %d %d %d",processo.nome,&processo.t0,&processo.dt,&processo.deadline);
+			create_cell(processo);
+		}
+
+
+	fclose(p);
+	dump_list();
+	free_list();
+	return 0;
 }
