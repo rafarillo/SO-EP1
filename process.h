@@ -25,6 +25,7 @@ typedef struct list List;
 
 List * create_list();
 void create_cell(data x,List *l);
+struct cell *at(int i, List *l);
 void dump_list();
 void free_list(List *l);
 int number_elements();

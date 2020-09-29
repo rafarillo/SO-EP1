@@ -12,7 +12,7 @@ bccsh.o: bccsh.c
 	$(CC) $(CFLAGS) -c bccsh.c
 
 ep1: ep1.o process.h
-	$(CC) ep1.o process.o -o ep1
+	$(CC) ep1.o process.o -lpthread -o ep1
 
 
 ep1.o: ep1.c process.o process.h

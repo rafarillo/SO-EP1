@@ -30,6 +30,14 @@ void create_cell(data x,List *l)
 	l->N++;
 }
 
+struct cell *at(int i, List *l)
+{
+	struct cell *p;
+	int k;
+	for(k = 0, p = l->ini; k < i; p=p->prox,k++);
+	return p;
+}
+
 void dump_list(List *l)
 {
 	for(struct cell *p = l->ini; p != NULL; p = p->prox)
