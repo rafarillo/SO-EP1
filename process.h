@@ -5,7 +5,7 @@
 struct info
 {
 	char nome[30];
-	int t0, dt, deadline;
+	int t0, dt, deadline,tf;
 };
 
 typedef struct info data;
@@ -16,12 +16,15 @@ struct cell
 	struct cell *prox;
 };
 
-typedef struct cell list;
+struct list
+{
+	struct cell *ini;
+	int N;
+};
+typedef struct list List;
 
-static list *ini = NULL;
-static int N = 0;
-
-void create_cell(data x);
+List * create_list();
+void create_cell(data x,List *l);
 void dump_list();
-void free_list();
-int total_process();
+void free_list(List *l);
+int number_elements();

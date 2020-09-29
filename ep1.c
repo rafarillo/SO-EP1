@@ -7,6 +7,7 @@ int main(int argc, char const *argv[])
 {
 	FILE *p = fopen(argv[2],"r");
 	data processo;
+	List *processos = create_list();
 	if(argc < 4)
 	{
 		printf("Numero invalido de argumentos\n");
@@ -21,12 +22,12 @@ int main(int argc, char const *argv[])
 	while(!feof(p))
 		{
 			fscanf(p,"%s %d %d %d",processo.nome,&processo.t0,&processo.dt,&processo.deadline);
-			create_cell(processo);
+			create_cell(processo,processos);
 		}
 
 
 	fclose(p);
-	dump_list();
-	free_list();
+	dump_list(processos);
+	free_list(processos);
 	return 0;
 }
