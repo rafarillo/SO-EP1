@@ -13,18 +13,18 @@ List * lista_de_processos(const char *s)
 {
 	FILE *p = fopen(s,"r");
 	processos = create_list();
-	if(p == NULL) 
+	if(p == NULL)
 	{
 		printf("Ocorreu erro na leitura\n");
 		exit(1);
-	}	
+	}
 	data processo;
 
 	while(!feof(p))
 	{
 		fscanf(p,"%s %d %d %d",processo.nome,&processo.t0,&processo.dt,&processo.deadline);
 		create_cell(processo,processos);
-	}	
+	}
 	fclose(p);
 	return processos;
 }
@@ -35,6 +35,7 @@ void * FCFS(void * i)
 	long int count = 2;
 	struct cell *thread = at(*P_i,processos);
 	printf("Sou o processo %s\n",thread->x.nome);
+	printf("Tenho tempo inicial igual a %d\n", thread->x.t0);
 	int dt = thread->x.dt;
 	while(thread->x.dt > 0)
 	{
@@ -46,6 +47,31 @@ void * FCFS(void * i)
 	return NULL;
 }
 
+/*Shortest Remaining Time Next*/
+// void * SRTN(void * i)
+// {
+// 	int * P_i = (int *) i;
+// 	long int count = 2;
+// 	struct cell *thread = at(*P_i,processos);
+// 	printf("Sou o processo %s\n",thread->x.nome);
+// 	int dt = thread->x.dt;
+// 	while(thread->x.dt > 0)
+// 	{
+// 		count*=count;
+// 		sleep(1);
+// 		thread->x.dt--;
+// 	}
+// 	printf("Incrivel passaram-se %d segundos\n",dt);
+// 	return NULL;
+// }
+//
+//
+
+
+
+
+
+
 int main(int argc, char const *argv[])
 {
 	if(argc < 4)
@@ -53,7 +79,7 @@ int main(int argc, char const *argv[])
 		printf("Numero invalido de argumentos\n");
 		exit(1);
 	}
-	
+
 	List *processos = lista_de_processos(argv[2]);
 	//dump_list(processos);
 	//printf("N=%d\n",processos->N);
@@ -75,7 +101,7 @@ int main(int argc, char const *argv[])
 		}
 
 	}
-	
+
 	time_t end;
 	time(&end);
 
