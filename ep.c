@@ -3,20 +3,14 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <time.h>
-#include "List.h"
-/*
-Problemas ainda a resolver
-Calculo do tempo real não só quando há um processo na Thread,
-Como intercalar o calculo do tempo (sleep) dentro da thread e fora da thread?
-*/
+#include "process.h"
 
-List processos;
+List *processos;
 int tempoAtual = 0;
-// int inicioSemProcesso = 1;
 
 // Essa funcao le o arquivo s e criar uma lista ligada para guardar as informacoes dos processos
 
-List  lista_de_processos(const char *s)
+List * lista_de_processos(const char *s)
 {
 	FILE *p = fopen(s,"r");
 	processos = create_list();
@@ -30,7 +24,7 @@ List  lista_de_processos(const char *s)
 	while(!feof(p))
 	{
 		fscanf(p,"%s %d %d %d",processo.nome,&processo.t0,&processo.dt,&processo.deadline);
-		addCell(processo,processos);
+		create_cell(processo,processos);
 	}
 	fclose(p);
 	return processos;
@@ -40,9 +34,11 @@ void * FCFS(void * i)
 {
 	int * P_i = (int *) i;
 	long int count = 2;
-	// inicioSemProcesso = 0;
-	Cell thread = at(*P_i,processos);
+
+	struct cell *thread = at(*P_i,processos);
+
 	printf("Sou o processo %s\n",thread->x.nome);
+	printf("Tenho tempo inicial igual a %d\n", thread->x.t0);
 	int dt = thread->x.dt;
 	while(thread->x.dt > 0)
 	{
@@ -50,11 +46,11 @@ void * FCFS(void * i)
 		sleep(1);
 		thread->x.dt--;
 		tempoAtual++;
-		printf("Tempo Atual: %d\n", tempoAtual);
 	}
 	printf("Incrivel passaram-se %d segundos\n",dt);
 	return NULL;
 }
+
 
 int main(int argc, char const *argv[])
 {
@@ -65,32 +61,34 @@ int main(int argc, char const *argv[])
 	}
 
 	processos = lista_de_processos(argv[2]);
+	List *processoAtual;
 
 	pthread_t thread;
+
+	int i = 0;
+	int tempoAtual;
 
 	time_t begin;
 	time(&begin);
 
-	int i = 0;
+	/*Se o processo atual for NULL ou se for todos os processos*/
+	while (processoAtual!= NULL && i < processos->N) {
 
-	while (i < processos->N) {
-
-		if(pthread_create(&thread, NULL, FCFS, (void *) &i))
-		{
-			printf("Erro ao criar a thread \n");
-			exit(1);
+		/*Se o tempo inicial do processoAtual for o tempoAtual, mande para thread*/
+		if (processoAtual->t0 == tempoAtual) {
+			if(pthread_create(&thread, NULL, FCFS, (void *) &i))
+			{
+				printf("Erro ao criar a thread \n");
+				exit(1);
+			}
+			if(pthread_join(thread,NULL))
+			{
+				printf("Erro ao dar join \n");
+				exit(1);
+			}
+			i++;
+			processoAtual = processoAtual->next;
 		}
-		if(pthread_join(thread,NULL))
-		{
-			printf("Erro ao dar join \n");
-			exit(1);
-		}
-		// if (inicioSemProcesso)
-		// {
-		// 	sleep(1);
-		// 	tempoAtual++;
-		// }
-		i++;
 	}
 
 	time_t end;
