@@ -12,5 +12,6 @@ Cell create_cell(data p, Cell proxima)
 	new_node->x.dt = p.dt;
 	new_node->x.deadline = p.deadline;
 	new_node->x.tf = 0;
+	new_node->x.id = p.id;
   return new_node;
 }
