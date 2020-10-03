@@ -12,6 +12,7 @@ Como intercalar o calculo do tempo (sleep) dentro da thread e fora da thread?
 
 List processos;
 int tempoAtual = 0;
+int validador = 0;
 struct timespec ts;
 
 pthread_mutex_t mutex;
@@ -43,23 +44,39 @@ List  lista_de_processos(const char *s)
 	return processos;
 }
 
+// void * escalondor(void * i) {
+// 	trava o FCFS;
+// 	e destrava[]
+// }
+
+
 void * FCFS(void * i)
 {
 	int j = 1;
-
-	/*100.000.000*/
-
 	int * P_i = (int *) i;
 	long int count = 2;
 	Cell thread = at(*P_i,processos);
 	int dt = thread->x.dt;
 
+	// while(identificadorGlobal != thread->x.id) {
+	// 	sleep(1);
+	// }
+
 	pthread_mutex_lock(&mutex);
 	printf("Sou o processo %s\n",thread->x.nome);
+
 	/*Seção Crítica*/
 	while(thread->x.dt > 0)
 	{
-		if(j%10 == 0) {
+		// if (chegou menor) {
+		//
+		// 	chegou menor = 0;
+		// 	pthread_mutex_unlock(&mutex);
+		// 	while(identificadorGlobal != thread->x.id) {
+		// 		sleep(1);
+		// 	}
+		// }
+		if( j % 10 == 0) {
 			count*=count;
 			thread->x.dt--;
 			printf("Tempo Atual: %d\n", tempoAtual);
@@ -68,11 +85,42 @@ void * FCFS(void * i)
 		nanosleep(&ts, NULL);
 		j++;
 	}
-
+	// de o pop se a pilha não estiver vazia
+	// identificadorGlobal = thread->x.idanterior;
 	pthread_mutex_unlock(&mutex);
 	printf("Encerrado Processo: %s -- Incrivel passaram-se %d segundos\n",thread->x.nome, dt);
 	return NULL;
 }
+
+/*
+void * SRTN(void * i)
+{
+	int j = 1;
+	int * P_i = (int *) i;
+	long int count = 2;
+	Cell thread = at(*P_i,processos);
+	int dt = thread->x.dt;
+
+	pthread_mutex_lock(&mutex);
+	printf("Sou o processo %s\n",thread->x.nome);
+	Seção Crítica
+	while(thread->x.dt > 0)
+	{
+		if( j % 10 == 0) {
+			count*=count;
+			thread->x.dt--;
+			printf("Tempo Atual: %d\n", tempoAtual);
+			tempoAtual++;
+		}
+		nanosleep(&ts, NULL);
+		j++;
+	}
+	pthread_mutex_unlock(&mutex);
+	printf("Encerrado Processo: %s -- Incrivel passaram-se %d segundos\n",thread->x.nome, dt);
+	return NULL;
+}
+*/
+
 
 int main(int argc, char const *argv[])
 {
@@ -92,22 +140,69 @@ int main(int argc, char const *argv[])
 	time(&begin);
 
 	int i = 0;
+	int qualEscalonador =	atoi(argv[1]);
 
 	pthread_mutex_init(&mutex, NULL);
+	Cell processoAtual;
+	int vdd = 0;
+	/*CHAMADA PARA O FCFS*/
+	if (qualEscalonador == 1) {
+		while (i < processos->N) {
+			processoAtual = at(i,processos);
+			if(processoAtual->x.t0 == tempoAtual) {
+				printf("Processo %s pede acesso -- no tempo: %d\n", processoAtual->x.nome, tempoAtual);
+				vdd = 1;
+				if (pthread_create(&thread[i], NULL, FCFS, (void*)&i)) {
+						printf("\n ERROR creating thread %d\n",i);
+						exit(1);
+				}
+				nanosleep(&ts, NULL);
+				i++;
+			} else if (vdd == 0){
+				sleep(1);
+				printf("tempoAtual %d\n", tempoAtual);
+				tempoAtual++;
+			}
+		}
+		for (i=0; i < processos->N; i++) {
+			if (pthread_join(thread[i], NULL))  {
+						printf("\n ERROR joining thread %d\n",i);
+						exit(1);
+			}
+		}
+		printf("\n\n%d\n", tempoAtual);
+	}
+	/* CHAMADA PARA O SRTN */
+	else if (qualEscalonador == 2) {
 
-	for (i=0; i<processos->N; i++) {
-		if (pthread_create(&thread[i], NULL, FCFS, (void*)&i)) {
-				printf("\n ERROR creating thread %d\n",i);
-				exit(1);
+		while (i < processos->N) {
+			processoAtual = at(i,processos);
+			if(processoAtual->x.t0 == tempoAtual) {
+				printf("Processo %s pede acesso -- no tempo: %d\n", processoAtual->x.nome, tempoAtual);
+				/*Comparar dt do processo que chegou com o processo que está sendo executado.*/
+				/*Caso dt seja menor, a gente cria a nova thread e retira o outro processo*/
+				if (dt < dt)
+					processoAtual->x.idanterior = identificadorGlobal;
+					identificadorGlobal = processoAtual->id
+					chegou menor
+
+				/*Caso contrário, colocamos em uma lista*/
+				if (pthread_create(&thread[i], NULL, SRTN, (void*)&i)) {
+						printf("\n ERROR creating thread %d\n",i);
+						exit(1);
+				}
+				nanosleep(&ts, NULL);
+				i++;
+			}
 		}
-		nanosleep(&ts, NULL);
-	}
-	for (i=0; i < processos->N; i++) {
-		if (pthread_join(thread[i], NULL))  {
-					printf("\n ERROR joining thread %d\n",i);
-					exit(1);
+		for (i=0; i < processos->N; i++) {
+			if (pthread_join(thread[i], NULL))  {
+						printf("\n ERROR joining thread %d\n",i);
+						exit(1);
+			}
 		}
 	}
+
 
 
 
