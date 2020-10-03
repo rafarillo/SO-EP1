@@ -35,7 +35,7 @@ Cell at(int i, List l)
 void dump_list(List l)
 {
 	for(Cell p = l->ini; p != NULL; p = p->prox)
-		printf("%s %d %d %d\n",p->x.nome,p->x.t0,p->x.dt,p->x.deadline);
+		printf("%s %d %d %d %d %d\n",p->x.nome,p->x.t0,p->x.dt,p->x.deadline,p->x.tf,p->x.tr);
 }
 
 void free_list(List l)
