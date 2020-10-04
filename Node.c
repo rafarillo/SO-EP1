@@ -1,23 +1,31 @@
-#include "Cell.h"
-#include <stdio.h>
+#include "Node.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 /* Protótipo de rotinas auxiliares */
 
 static void *mallocSafe(size_t nbytes);
 
-Cell create_cell(data p, Cell proxima)
-{
-	Cell new_node = mallocSafe(sizeof(*new_node));
-	strcpy(new_node->x.nome,p.nome);
-	new_node->x.t0 = p.t0;
+Link newNode (data p, Link next, Link previous) {
+  Link new_node = mallocSafe(sizeof(*new_node));
+  strcpy(new_node->x.nome,p.nome);
+  new_node->x.t0 = p.t0;
 	new_node->x.dt = p.dt;
 	new_node->x.deadline = p.deadline;
 	new_node->x.tf = 0;
 	new_node->x.id = p.id;
 	new_node->x.idAnterior = -2;
+  new_node->idThread = p.id;
+  new_node->next = next;
+  new_node->previous = previous;
   return new_node;
+}
+
+void freeNode (Link q) {
+  q->next = NULL;
+  q->previous = NULL;
+  free(q);
 }
 
 /* Implementação das rotinas auxiliares */

@@ -138,6 +138,7 @@ void * SRTN(void * i)
 
 int main(int argc, char const *argv[])
 {
+	// entrada = create_list();
 	ts.tv_sec  = 0;
 	ts.tv_nsec = 100000000;
 	if(argc < 4)
@@ -149,10 +150,6 @@ int main(int argc, char const *argv[])
 	if(argc == 5 && !strcmp(argv[4],"d")) d = 1;
 */
 	processos = lista_de_processos(argv[2]);
-	printf("Numero de Processos: %d\n", processos->N);
-	for (int l = 0; l < processos->N; l++) {
-		printf("Nome %s -- T0: %d -- idAnterior p %d\n", at(l,processos)->x.nome, at(l,processos)->x.t0, at(l,processos)->x.idAnterior);
-	}
 
 	pthread_t thread[processos->N];
 
@@ -161,11 +158,10 @@ int main(int argc, char const *argv[])
 
 	int i = 0;
 	int qualEscalonador =	atoi(argv[1]);
+	double quantum = 0.2;
 
 	pthread_mutex_init(&mutex, NULL);
-	Cell processoAtual;
-	Cell executando;
-	Cell temp;
+	Cell processoAtual, executando, temp;
 
 	/*CHAMADA PARA O FCFS*/
 	if (qualEscalonador == 1) {
@@ -224,10 +220,7 @@ int main(int argc, char const *argv[])
 						temp->x.idAnterior = processoAtual->x.id;
 					}
 					processoAtual->x.idAnterior = -1;				}
-				// for (int l = 0; l < processos->N; l++) {
-				// 	temp = at(l,processos);
-				// 	printf("Nome %s -- T0: %d -- idAnterior p%d\n", temp->x.nome, temp->x.t0, temp->x.idAnterior);
-				// }
+
 				if (pthread_create(&thread[i], NULL, SRTN, (void*)&i)) {
 						printf("\n ERROR creating thread %d\n",i);
 						exit(1);
@@ -247,6 +240,11 @@ int main(int argc, char const *argv[])
 			}
 		}
 		printf("\n\n%d\n", tempoAtual);
+	}
+
+	/*CHAMADA PARA O RR*/
+	else {
+
 	}
 
 
