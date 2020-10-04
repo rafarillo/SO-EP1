@@ -129,6 +129,15 @@ void * SRTN(void * i)
 	}
 	pthread_mutex_unlock(&mutex);
 	idExecutando = thread->x.idAnterior;
+	/*Implementação do Rafa*/
+	thread->x.tf = tempoAtual;
+	thread->x.tr = thread->x.tf - thread->x.t0;
+	contexto++;
+	if(d) {
+		fprintf(stderr,"Encerrado Processo: %s deixando a cpu%d\n",thread->x.nome, sched_getcpu());
+		fprintf(stderr,"Linha escrita no arquivo de saida: %s %d %d\n",thread->x.nome, thread->x.tf, thread->x.tr);
+		fprintf(stderr, "%d mudancas de contexto \n",contexto );
+	}
 	isThread--;
 	printf("Encerrado Processo: %s -- Incrivel passaram-se %d segundos\n",thread->x.nome, dt);
 	return NULL;
