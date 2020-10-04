@@ -15,7 +15,7 @@ struct sequenciaFila {
 Fila filaInit();
 
 /*Adiciona Processo na Fila da CPU*/
-void addProcessoFilaCircular(data, Fila, int);
+void addProcessoFilaCircular(data, Fila);
 
 /*Imprime a fila em determinado UT*/
 // void imprimeFila(Fila, int);

@@ -10,16 +10,16 @@ Problemas ainda a resolver
 Calculo do tempo real não só quando há um processo na Thread,
 Como intercalar o calculo do tempo (sleep) dentro da thread e fora da thread?
 */
-
+Fila circular;
 List processos;
 int tempoAtual = 0;
 int isThread = 0;
 int isMenor = 0;
 int idExecutando = -1;
-/* Rafa
+/* Rafa*/
 int d = 0;
 int contexto = 0;
-*/
+
 struct timespec ts;
 pthread_mutex_t mutex;
 
@@ -78,16 +78,15 @@ void * FCFS(void * i)
 	}
 	pthread_mutex_unlock(&mutex);
 
-	/*Implementação do Rafa
+	/*Implementação do Rafa*/
 	thread->x.tf = tempoAtual;
 	thread->x.tr = thread->x.tf - thread->x.t0;
 	contexto++;
 	if(d) {
 		fprintf(stderr,"Encerrado Processo: %s deixando a cpu%d\n",thread->x.nome, sched_getcpu());
 		fprintf(stderr,"Linha escrita no arquivo de saida: %s %d %d\n",thread->x.nome, thread->x.tf, thread->x.tr);
+		fprintf(stderr, "%d mudancas de contexto \n",contexto );
 	}
-	fprintf(stderr, "%d mudancas de contexto \n",contexto );
-	*/
 	isThread--;
 	printf("Encerrado Processo: %s -- Incrivel passaram-se %d segundos\n",thread->x.nome, dt);
 	return NULL;
@@ -146,9 +145,8 @@ int main(int argc, char const *argv[])
 		printf("Numero invalido de argumentos\n");
 		exit(1);
 	}
-/* Rafa
+/* Rafa */
 	if(argc == 5 && !strcmp(argv[4],"d")) d = 1;
-*/
 	processos = lista_de_processos(argv[2]);
 
 	pthread_t thread[processos->N];
@@ -193,6 +191,7 @@ int main(int argc, char const *argv[])
 	else if (qualEscalonador == 2) {
 
 		while (i < processos->N) {
+
 			processoAtual = at(i,processos);
 			if(processoAtual->x.t0 == tempoAtual) {
 				printf("Processo %s pede acesso -- no tempo: %d\n", processoAtual->x.nome, tempoAtual);
@@ -242,13 +241,27 @@ int main(int argc, char const *argv[])
 		printf("\n\n%d\n", tempoAtual);
 	}
 
-	/*CHAMADA PARA O RR*/
-	else {
-
-	}
-
-
-
+	// /*CHAMADA PARA O RR*/
+	// else {
+	// 	while (i < processos->N) {
+	// 		processoAtual = at(i,processos);
+	// 		if(processoAtual->x.t0 == tempoAtual) {
+	// 			/*Ponho na fila circular*/
+	// 			addProcessoFilaCircular(processoAtual->x, circular);
+	// 			/*Se não tem ninguém já manda o current apontar para o atual*/
+	//
+	// 			/*Caso contrário, deixa quieto ele no final da fila*/
+	//
+	// 			/*Independente de tudo isso cria a thread*/
+	// 			i++;
+	// 		}	else if (isThread == 0){
+	// 			sleep(1);
+	// 			printf("Tempo Atual %d\n", tempoAtual);
+	// 			tempoAtual++;
+	// 		}
+	//
+	// 	}
+	// }
 
 	time_t end;
 	time(&end);
@@ -256,7 +269,7 @@ int main(int argc, char const *argv[])
 	printf("Passaram-se %lf segundos\n",difftime(end,begin));
 	pthread_mutex_destroy(&mutex);
 
-/* Rafa
+/* Rafa */
 	FILE *f = fopen(argv[3],"w");
 	if(f == NULL)
 	{
@@ -269,7 +282,7 @@ int main(int argc, char const *argv[])
 	fprintf(f, "%d\n",contexto );
 
 	fclose(f);
-*/
+
 	free_list(processos);
 	return 0;
 }

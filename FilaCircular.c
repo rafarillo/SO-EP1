@@ -32,7 +32,7 @@ Fila filaInit() {
   return fila;
 }
 
-void addProcessoFilaCircular(data p, Fila fila, int i) {
+void addProcessoFilaCircular(data p, Fila fila) {
                                 /*Next     previous*/
   Link novo = newNode(p, fila->cabeca, fila->cabeca->previous);
   fila->cabeca->previous->next = novo;
