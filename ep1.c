@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <time.h>
+#include <sched.h>
 #include "List.h"
 /*
 Problemas ainda a resolver
@@ -12,12 +13,14 @@ Como intercalar o calculo do tempo (sleep) dentro da thread e fora da thread?
 
 List processos;
 List entrada;
+
 int tempoAtual = 0;
 int isThread = 0;
 int isMenor = 0;
 int idExecutando = -1;
+int d = 0;
+int contexto = 0;
 struct timespec ts;
-
 pthread_mutex_t mutex;
 
 
@@ -74,6 +77,18 @@ void * FCFS(void * i)
 		j++;
 	}
 	pthread_mutex_unlock(&mutex);
+
+	/*Implementação do Rafa*/
+	thread->x.tf = tempoAtual;
+	thread->x.tr = thread->x.tf - thread->x.t0;
+	contexto++;
+	if(d) {
+		fprintf(stderr,"Encerrado Processo: %s deixando a cpu%d\n",thread->x.nome, sched_getcpu());
+		fprintf(stderr,"Linha escrita no arquivo de saida: %s %d %d\n",thread->x.nome, thread->x.tf, thread->x.tr);
+	}
+	fprintf(stderr, "%d mudancas de contexto \n",contexto );
+
+	/**/
 	isThread--;
 	printf("Encerrado Processo: %s -- Incrivel passaram-se %d segundos\n",thread->x.nome, dt);
 	return NULL;
@@ -133,11 +148,14 @@ int main(int argc, char const *argv[])
 		exit(1);
 	}
 
+	if(argc == 5 && !strcmp(argv[4],"d")) d = 1;
+
 	processos = lista_de_processos(argv[2]);
 	printf("Numero de Processos: %d\n", processos->N);
 	for (int l = 0; l < processos->N; l++) {
 		printf("Nome %s\n", at(l,processos)->x.nome);
 	}
+
 	pthread_t thread[processos->N];
 
 	time_t begin;
@@ -184,7 +202,7 @@ int main(int argc, char const *argv[])
 			processoAtual = at(i,processos);
 			if(processoAtual->x.t0 == tempoAtual) {
 				printf("Processo %s pede acesso -- no tempo: %d\n", processoAtual->x.nome, tempoAtual);
-				addCell()
+				// addCell()
 				/*Caso não haja nenhuma thread sendo executada*/
 				if (isThread == 0) {
 					printf("ZERO\n");
@@ -252,6 +270,20 @@ int main(int argc, char const *argv[])
 
 	printf("Passaram-se %lf segundos\n",difftime(end,begin));
 	pthread_mutex_destroy(&mutex);
+
+	FILE *f = fopen(argv[3],"w");
+	if(f == NULL)
+	{
+		printf("Erro ao abir\n");
+		exit(1);
+	}
+
+	for(Cell p = processos->ini; p != NULL; p = p->prox)
+		fprintf(f,"%s %d %d\n",p->x.nome, p->x.tf, p->x.tr);
+	fprintf(f, "%d\n",contexto );
+
+	fclose(f);
+
 	free_list(processos);
 	return 0;
 }
