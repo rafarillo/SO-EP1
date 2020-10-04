@@ -105,6 +105,7 @@ void * SRTN(void * i)
 		nanosleep(&ts, NULL);
 	}
 	pthread_mutex_lock(&mutex);
+	if(d) fprintf(stderr,"Sou o processo %s usando a cpu%d\n",thread->x.nome,sched_getcpu());
 	isMenor = 0;
 
 	printf("Sou o processo %s\n",thread->x.nome);
