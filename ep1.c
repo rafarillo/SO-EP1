@@ -10,17 +10,18 @@ Problemas ainda a resolver
 Calculo do tempo real não só quando há um processo na Thread,
 Como intercalar o calculo do tempo (sleep) dentro da thread e fora da thread?
 */
-Fila circular;
 List processos;
 int tempoAtual = 0;
 int isThread = 0;
 int isMenor = 0;
 int idExecutando = -1;
+int ns = 1;
 /* Rafa*/
 int d = 0;
 int contexto = 0;
 
 struct timespec ts;
+struct timespec tsrr;
 pthread_mutex_t mutex;
 
 
@@ -61,7 +62,7 @@ void * FCFS(void * i)
 	int dt = thread->x.dt;
 	isThread++;
 	pthread_mutex_lock(&mutex);
-
+	if(d) fprintf(stderr,"Sou o processo %s usando a cpu%d\n",thread->x.nome,sched_getcpu());
 	printf("Sou o processo %s\n",thread->x.nome);
 
 	/*Seção Crítica*/
@@ -146,9 +147,11 @@ void * SRTN(void * i)
 
 int main(int argc, char const *argv[])
 {
-	// entrada = create_list();
 	ts.tv_sec  = 0;
 	ts.tv_nsec = 100000000;
+
+	tsrr.tv_sec  = 0;
+	tsrr.tv_nsec = 100; // 1/10000000 s
 	if(argc < 4)
 	{
 		printf("Numero invalido de argumentos\n");
@@ -165,7 +168,6 @@ int main(int argc, char const *argv[])
 
 	int i = 0;
 	int qualEscalonador =	atoi(argv[1]);
-	double quantum = 0.2;
 
 	pthread_mutex_init(&mutex, NULL);
 	Cell processoAtual, executando, temp;
@@ -175,6 +177,7 @@ int main(int argc, char const *argv[])
 		while (i < processos->N) {
 			processoAtual = at(i,processos);
 			if(processoAtual->x.t0 == tempoAtual) {
+				if(d)  fprintf(stderr,"Processo %s %d %d %d pede acesso -- no tempo: %d\n", processoAtual->x.nome,processoAtual->x.t0,processoAtual->x.dt,processoAtual->x.deadline ,tempoAtual);
 				printf("Processo %s pede acesso -- no tempo: %d\n", processoAtual->x.nome, tempoAtual);
 				if (pthread_create(&thread[i], NULL, FCFS, (void*)&i)) {
 						printf("\n ERROR creating thread %d\n",i);
@@ -203,6 +206,7 @@ int main(int argc, char const *argv[])
 
 			processoAtual = at(i,processos);
 			if(processoAtual->x.t0 == tempoAtual) {
+				if(d)  fprintf(stderr,"Processo %s %d %d %d pede acesso -- no tempo: %d\n", processoAtual->x.nome,processoAtual->x.t0,processoAtual->x.dt,processoAtual->x.deadline ,tempoAtual);
 				printf("Processo %s pede acesso -- no tempo: %d\n", processoAtual->x.nome, tempoAtual);
 				/*Caso não haja nenhuma thread sendo executada*/
 				if (isThread == 0) {
@@ -249,28 +253,6 @@ int main(int argc, char const *argv[])
 		}
 		printf("\n\n%d\n", tempoAtual);
 	}
-
-	// /*CHAMADA PARA O RR*/
-	// else {
-	// 	while (i < processos->N) {
-	// 		processoAtual = at(i,processos);
-	// 		if(processoAtual->x.t0 == tempoAtual) {
-	// 			/*Ponho na fila circular*/
-	// 			addProcessoFilaCircular(processoAtual->x, circular);
-	// 			/*Se não tem ninguém já manda o current apontar para o atual*/
-	//
-	// 			/*Caso contrário, deixa quieto ele no final da fila*/
-	//
-	// 			/*Independente de tudo isso cria a thread*/
-	// 			i++;
-	// 		}	else if (isThread == 0){
-	// 			sleep(1);
-	// 			printf("Tempo Atual %d\n", tempoAtual);
-	// 			tempoAtual++;
-	// 		}
-	//
-	// 	}
-	// }
 
 	time_t end;
 	time(&end);
