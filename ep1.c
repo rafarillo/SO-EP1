@@ -12,14 +12,14 @@ Como intercalar o calculo do tempo (sleep) dentro da thread e fora da thread?
 */
 
 List processos;
-List entrada;
-
 int tempoAtual = 0;
 int isThread = 0;
 int isMenor = 0;
 int idExecutando = -1;
+/* Rafa
 int d = 0;
 int contexto = 0;
+*/
 struct timespec ts;
 pthread_mutex_t mutex;
 
@@ -78,7 +78,7 @@ void * FCFS(void * i)
 	}
 	pthread_mutex_unlock(&mutex);
 
-	/*Implementação do Rafa*/
+	/*Implementação do Rafa
 	thread->x.tf = tempoAtual;
 	thread->x.tr = thread->x.tf - thread->x.t0;
 	contexto++;
@@ -87,8 +87,7 @@ void * FCFS(void * i)
 		fprintf(stderr,"Linha escrita no arquivo de saida: %s %d %d\n",thread->x.nome, thread->x.tf, thread->x.tr);
 	}
 	fprintf(stderr, "%d mudancas de contexto \n",contexto );
-
-	/**/
+	*/
 	isThread--;
 	printf("Encerrado Processo: %s -- Incrivel passaram-se %d segundos\n",thread->x.nome, dt);
 	return NULL;
@@ -123,7 +122,7 @@ void * SRTN(void * i)
 		if( j % 10 == 0) {
 			count*=count;
 			thread->x.dt--;
-			printf("Tempo Atual: %d -- Processo: %s\n", tempoAtual, thread->x.nome);
+			printf("Tempo Atual: %d\n", tempoAtual);
 			tempoAtual++;
 		}
 		nanosleep(&ts, NULL);
@@ -139,7 +138,6 @@ void * SRTN(void * i)
 
 int main(int argc, char const *argv[])
 {
-	entrada = create_list();
 	ts.tv_sec  = 0;
 	ts.tv_nsec = 100000000;
 	if(argc < 4)
@@ -147,13 +145,13 @@ int main(int argc, char const *argv[])
 		printf("Numero invalido de argumentos\n");
 		exit(1);
 	}
-
+/* Rafa
 	if(argc == 5 && !strcmp(argv[4],"d")) d = 1;
-
+*/
 	processos = lista_de_processos(argv[2]);
 	printf("Numero de Processos: %d\n", processos->N);
 	for (int l = 0; l < processos->N; l++) {
-		printf("Nome %s\n", at(l,processos)->x.nome);
+		printf("Nome %s -- T0: %d -- idAnterior p %d\n", at(l,processos)->x.nome, at(l,processos)->x.t0, at(l,processos)->x.idAnterior);
 	}
 
 	pthread_t thread[processos->N];
@@ -167,7 +165,7 @@ int main(int argc, char const *argv[])
 	pthread_mutex_init(&mutex, NULL);
 	Cell processoAtual;
 	Cell executando;
-	Cell temp, temp1;
+	Cell temp;
 
 	/*CHAMADA PARA O FCFS*/
 	if (qualEscalonador == 1) {
@@ -183,7 +181,7 @@ int main(int argc, char const *argv[])
 				i++;
 			} else if (isThread == 0){
 				sleep(1);
-				printf("--tempoAtual %d\n", tempoAtual);
+				printf("Tempo Atual %d\n", tempoAtual);
 				tempoAtual++;
 			}
 		}
@@ -202,46 +200,34 @@ int main(int argc, char const *argv[])
 			processoAtual = at(i,processos);
 			if(processoAtual->x.t0 == tempoAtual) {
 				printf("Processo %s pede acesso -- no tempo: %d\n", processoAtual->x.nome, tempoAtual);
-				// addCell()
 				/*Caso não haja nenhuma thread sendo executada*/
 				if (isThread == 0) {
-					printf("ZERO\n");
 					idExecutando = processoAtual->x.id;
 					processoAtual->x.idAnterior = -1;
 					executando = processoAtual;
-					printf("Nome %s -- Anterior p%d\n", processoAtual->x.nome, processoAtual->x.idAnterior);
 				}
 				/*Compara dt do processoAtual que chegou com o processo que está sendo executado.*/
 				else if (processoAtual->x.dt < executando->x.dt) {
-					printf("MENOR\n");
-					printf("Processo Atual: %s\n", processoAtual->x.nome);
-					printf("Executando: %s\n", executando->x.nome);
 					processoAtual->x.idAnterior = idExecutando;
 					idExecutando = processoAtual->x.id;
 					executando = processoAtual;
 					isMenor = 1;
-					printf("Nome %s -- Anterior p%d\n", processoAtual->x.nome, processoAtual->x.idAnterior);
 				} else if (processoAtual->x.dt >= executando->x.dt) {
-					printf("MAIOR\n");
 					if (executando->x.idAnterior == -1) {
-						executando->x.idAnterior = processoAtual, temp->x.idAnterior->x.id;
+						executando->x.idAnterior = processoAtual->x.id;
+						processoAtual->x.idAnterior = -1;
 					} else {
 						temp = executando;
-						temp1 = temp;
 						while (temp->x.idAnterior != -1) {
-							temp1 = temp;
 							temp = at(temp->x.idAnterior,processos);
 						}
-						printf("-----%s\n", temp1->x.nome);
-						temp1->x.idAnterior = processoAtual->x.id;
+						temp->x.idAnterior = processoAtual->x.id;
 					}
-					processoAtual->x.idAnterior = -1;
-					printf("Nome %s -- Anterior p%d\n", processoAtual->x.nome, processoAtual->x.idAnterior);
-				}
-				for (int l = 0; l < processos->N; l++) {
-					temp = at(l,processos);
-					printf("Nome %s -- Anterior p%d\n", temp->x.nome, temp->x.idAnterior);
-				}
+					processoAtual->x.idAnterior = -1;				}
+				// for (int l = 0; l < processos->N; l++) {
+				// 	temp = at(l,processos);
+				// 	printf("Nome %s -- T0: %d -- idAnterior p%d\n", temp->x.nome, temp->x.t0, temp->x.idAnterior);
+				// }
 				if (pthread_create(&thread[i], NULL, SRTN, (void*)&i)) {
 						printf("\n ERROR creating thread %d\n",i);
 						exit(1);
@@ -250,7 +236,7 @@ int main(int argc, char const *argv[])
 				i++;
 			} else if (isThread == 0){
 				sleep(1);
-				printf("--tempoAtual %d\n", tempoAtual);
+				printf("Tempo Atual %d\n", tempoAtual);
 				tempoAtual++;
 			}
 		}
@@ -260,6 +246,7 @@ int main(int argc, char const *argv[])
 						exit(1);
 			}
 		}
+		printf("\n\n%d\n", tempoAtual);
 	}
 
 
@@ -271,6 +258,7 @@ int main(int argc, char const *argv[])
 	printf("Passaram-se %lf segundos\n",difftime(end,begin));
 	pthread_mutex_destroy(&mutex);
 
+/* Rafa
 	FILE *f = fopen(argv[3],"w");
 	if(f == NULL)
 	{
@@ -283,7 +271,7 @@ int main(int argc, char const *argv[])
 	fprintf(f, "%d\n",contexto );
 
 	fclose(f);
-
+*/
 	free_list(processos);
 	return 0;
 }
