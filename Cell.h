@@ -7,3 +7,14 @@ struct cell
 };
 
 Cell create_cell(data, Cell);
+
+typedef struct queueNode *Link;
+struct queueNode {
+  Link next;
+  Link previous;
+	Cell celula;
+};
+
+/*Cria Node com*/
+Link newNode (Cell, Link, Link);
+void freeNode (Link);

@@ -16,11 +16,16 @@ int tempoAtual = 0;
 int isThread = 0;
 int isMenor = 0;
 int idExecutando = -1;
+int proxId;
+int acabouQuantum = 0;
+double quantum = 3;
+
 /* Rafa*/
 int d = 0;
 int contexto = 0;
 
 struct timespec ts;
+struct timespec tsrr;
 pthread_mutex_t mutex;
 
 
@@ -61,7 +66,7 @@ void * FCFS(void * i)
 	int dt = thread->x.dt;
 	isThread++;
 	pthread_mutex_lock(&mutex);
-
+	if(d) fprintf(stderr,"Sou o processo %s usando a cpu%d\n",thread->x.nome,sched_getcpu());
 	printf("Sou o processo %s\n",thread->x.nome);
 
 	/*Seção Crítica*/
@@ -104,6 +109,7 @@ void * SRTN(void * i)
 		nanosleep(&ts, NULL);
 	}
 	pthread_mutex_lock(&mutex);
+	if(d) fprintf(stderr,"Sou o processo %s usando a cpu%d\n",thread->x.nome,sched_getcpu());
 	isMenor = 0;
 
 	printf("Sou o processo %s\n",thread->x.nome);
@@ -143,12 +149,69 @@ void * SRTN(void * i)
 	return NULL;
 }
 
+void * RR(void * i)
+{
+	int j = 1;
+	int * P_i = (int *) i;
+	long int count = 2;
+	Cell thread = at(*P_i,processos);
+	int dt = thread->x.dt;
+	isThread++;
+
+	while(idExecutando != thread->x.id) {
+		nanosleep(&ts, NULL);
+	}
+	pthread_mutex_lock(&mutex);
+	if(d) fprintf(stderr,"Sou o processo %s usando a cpu%d\n",thread->x.nome,sched_getcpu());
+	printf("Sou o processo %s\n",thread->x.nome);
+
+	/*Seção Crítica*/
+	while(thread->x.dt > 0)
+	{
+		if (thread->x.tquantum == quantum) {
+			thread->x.tquantum = 0;
+			proximoNode(circular);
+			idExecutando = circular->current->celula->x.id;
+			pthread_mutex_unlock(&mutex);
+			while(idExecutando != thread->x.id) {
+				nanosleep(&ts, NULL);
+			}
+		}
+		if( j % 10 == 0) {
+			count*=count;
+			thread->x.dt--;
+			printf("Tempo Atual: %d --- Processo %s\n", tempoAtual, thread->x.nome);
+			tempoAtual++;
+			thread->x.tquantum++;
+		}
+		nanosleep(&ts, NULL);
+		j++;
+	}
+	pthread_mutex_unlock(&mutex);
+	isThread--;
+	/*Implementação do Rafa*/
+	thread->x.tf = tempoAtual;
+	thread->x.tr = thread->x.tf - thread->x.t0;
+	contexto++;
+	if(d) {
+		fprintf(stderr,"Encerrado Processo: %s deixando a cpu%d\n",thread->x.nome, sched_getcpu());
+		fprintf(stderr,"Linha escrita no arquivo de saida: %s %d %d\n",thread->x.nome, thread->x.tf, thread->x.tr);
+		fprintf(stderr, "%d mudancas de contexto \n",contexto );
+	}
+	retiraNodeFilaCircular(circular);
+	idExecutando = circular->current->celula->x.id;
+	printf("Encerrado Processo: %s --- no tempo: %d --- Incrivel passaram-se %d segundos\n",thread->x.nome, tempoAtual, dt);
+	return NULL;
+}
 
 int main(int argc, char const *argv[])
 {
-	// entrada = create_list();
+	circular = filaInit();
 	ts.tv_sec  = 0;
-	ts.tv_nsec = 100000000;
+	ts.tv_nsec = 100000000; // 1/10 s
+
+	tsrr.tv_sec  = 0;
+	tsrr.tv_nsec = 100; // 1/10000000 s
 	if(argc < 4)
 	{
 		printf("Numero invalido de argumentos\n");
@@ -165,7 +228,7 @@ int main(int argc, char const *argv[])
 
 	int i = 0;
 	int qualEscalonador =	atoi(argv[1]);
-	double quantum = 0.2;
+
 
 	pthread_mutex_init(&mutex, NULL);
 	Cell processoAtual, executando, temp;
@@ -175,16 +238,17 @@ int main(int argc, char const *argv[])
 		while (i < processos->N) {
 			processoAtual = at(i,processos);
 			if(processoAtual->x.t0 == tempoAtual) {
+				if(d)  fprintf(stderr,"Processo %s %d %d %d pede acesso -- no tempo: %d\n", processoAtual->x.nome,processoAtual->x.t0,processoAtual->x.dt,processoAtual->x.deadline ,tempoAtual);
 				printf("Processo %s pede acesso -- no tempo: %d\n", processoAtual->x.nome, tempoAtual);
 				if (pthread_create(&thread[i], NULL, FCFS, (void*)&i)) {
 						printf("\n ERROR creating thread %d\n",i);
 						exit(1);
 				}
-				nanosleep(&ts, NULL);
+				nanosleep(&tsrr, NULL);
 				i++;
 			} else if (isThread == 0){
 				sleep(1);
-				printf("Tempo Atual %d\n", tempoAtual);
+				printf("---Tempo Atual: %d\n", tempoAtual);
 				tempoAtual++;
 			}
 		}
@@ -200,9 +264,9 @@ int main(int argc, char const *argv[])
 	else if (qualEscalonador == 2) {
 
 		while (i < processos->N) {
-
 			processoAtual = at(i,processos);
 			if(processoAtual->x.t0 == tempoAtual) {
+				if(d)  fprintf(stderr,"Processo %s %d %d %d pede acesso -- no tempo: %d\n", processoAtual->x.nome,processoAtual->x.t0,processoAtual->x.dt,processoAtual->x.deadline ,tempoAtual);
 				printf("Processo %s pede acesso -- no tempo: %d\n", processoAtual->x.nome, tempoAtual);
 				/*Caso não haja nenhuma thread sendo executada*/
 				if (isThread == 0) {
@@ -227,17 +291,17 @@ int main(int argc, char const *argv[])
 						}
 						temp->x.idAnterior = processoAtual->x.id;
 					}
-					processoAtual->x.idAnterior = -1;				}
-
+					processoAtual->x.idAnterior = -1;
+				}
 				if (pthread_create(&thread[i], NULL, SRTN, (void*)&i)) {
 						printf("\n ERROR creating thread %d\n",i);
 						exit(1);
 				}
-				nanosleep(&ts, NULL);
+				nanosleep(&tsrr, NULL);
 				i++;
 			} else if (isThread == 0){
 				sleep(1);
-				printf("Tempo Atual %d\n", tempoAtual);
+				printf("---Tempo Atual: %d\n", tempoAtual);
 				tempoAtual++;
 			}
 		}
@@ -250,27 +314,41 @@ int main(int argc, char const *argv[])
 		printf("\n\n%d\n", tempoAtual);
 	}
 
-	// /*CHAMADA PARA O RR*/
-	// else {
-	// 	while (i < processos->N) {
-	// 		processoAtual = at(i,processos);
-	// 		if(processoAtual->x.t0 == tempoAtual) {
-	// 			/*Ponho na fila circular*/
-	// 			addProcessoFilaCircular(processoAtual->x, circular);
-	// 			/*Se não tem ninguém já manda o current apontar para o atual*/
-	//
-	// 			/*Caso contrário, deixa quieto ele no final da fila*/
-	//
-	// 			/*Independente de tudo isso cria a thread*/
-	// 			i++;
-	// 		}	else if (isThread == 0){
-	// 			sleep(1);
-	// 			printf("Tempo Atual %d\n", tempoAtual);
-	// 			tempoAtual++;
-	// 		}
-	//
-	// 	}
-	// }
+	/*CHAMADA PARA O RR*/
+	else {
+		while (i < processos->N) {
+			processoAtual = at(i,processos);
+			if(processoAtual->x.t0 == tempoAtual) {
+				if(d)  fprintf(stderr,"Processo %s %d %d %d pede acesso -- no tempo: %d\n", processoAtual->x.nome,processoAtual->x.t0,processoAtual->x.dt,processoAtual->x.deadline ,tempoAtual);
+				printf("\nProcesso %s pede acesso -- no tempo: %d\n", processoAtual->x.nome, tempoAtual);
+				/*Ponho na fila circular*/
+				addProcessoFilaCircular(processoAtual, circular);
+
+				/*Se não há ninguém na thread*/
+				if (isThread == 0) {
+					proximoNode(circular);
+					idExecutando = circular->current->celula->x.id;
+				}
+				if (pthread_create(&thread[i], NULL, RR, (void*)&i)) {
+						printf("\n ERROR creating thread %d\n",i);
+						exit(1);
+				}
+				nanosleep(&tsrr, NULL);
+				i++;
+			}
+			else if (isThread == 0){
+				sleep(1);
+				printf("---Tempo Atual: %d\n", tempoAtual);
+				tempoAtual++;
+			}
+		}
+		for (i=0; i < processos->N; i++) {
+			if (pthread_join(thread[i], NULL))  {
+						printf("\n ERROR joining thread %d\n",i);
+						exit(1);
+			}
+		}
+	}
 
 	time_t end;
 	time(&end);
