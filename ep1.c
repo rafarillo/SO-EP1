@@ -195,7 +195,7 @@ int main(int argc, char const *argv[])
 		printf("Numero invalido de argumentos\n");
 		exit(1);
 	}
-/* Rafa */
+
 	if(argc == 5 && !strcmp(argv[4],"d")) d = 1;
 	processos = lista_de_processos(argv[2]);
 
@@ -323,7 +323,6 @@ int main(int argc, char const *argv[])
 			/*Caso não haja algum processo sendo executado na thread, conte o tempo*/
 			else if (isThread == 0){
 				sleep(1);
-				printf("Tempo Atual %d\n", tempoAtual);
 				tempoAtual++;
 			}
 		}
