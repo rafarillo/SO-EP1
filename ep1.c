@@ -10,16 +10,11 @@ Problemas ainda a resolver
 Calculo do tempo real não só quando há um processo na Thread,
 Como intercalar o calculo do tempo (sleep) dentro da thread e fora da thread?
 */
-Fila circular;
 List processos;
 int tempoAtual = 0;
 int isThread = 0;
 int isMenor = 0;
 int idExecutando = -1;
-int proxId;
-int acabouQuantum = 0;
-double quantum = 3;
-
 /* Rafa*/
 int d = 0;
 int contexto = 0;
@@ -228,7 +223,6 @@ int main(int argc, char const *argv[])
 
 	int i = 0;
 	int qualEscalonador =	atoi(argv[1]);
-
 
 	pthread_mutex_init(&mutex, NULL);
 	Cell processoAtual, executando, temp;
