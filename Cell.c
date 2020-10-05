@@ -4,7 +4,6 @@
 #include <string.h>
 
 /* Protótipo de rotinas auxiliares */
-
 static void *mallocSafe(size_t nbytes);
 
 Cell create_cell(data p, Cell proxima)
@@ -37,7 +36,6 @@ void freeNode (Link q) {
 }
 
 /* Implementação das rotinas auxiliares */
-
 static void *mallocSafe(size_t nbytes) {
   void *p = malloc(nbytes);
 

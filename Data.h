@@ -1,3 +1,4 @@
+/*Dados dos processos*/
 typedef struct info data;
 struct info
 {

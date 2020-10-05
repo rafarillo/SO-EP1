@@ -15,7 +15,6 @@ char* type_prompt(char* usuario)
 {
 	char *line;
 	line = readline(usuario);
-	/*printf("%s",line);*/
 	return line;
 }
 
@@ -30,11 +29,9 @@ char** comando(char *line, int * args)
 	for(int i = 0; i < 5; i++)
 		comando[i] = NULL;
 	comando[arg++] = c;
-	/*printf("%s\n",comando[0]);*/
 	while((c =strtok(NULL," ")) != NULL )
 	{
 		comando[arg] = c;
-		/*printf("%s\n",comando[arg]);*/
 		arg++;
 	}
 	*args = arg;
@@ -42,7 +39,6 @@ char** comando(char *line, int * args)
 }
 
 /* Essa funcao le o comando digitado pelo usuario e atraves de syscalls realiza o que o usuario deseja*/
-
 void read_commad(char **commands)
 {
 	if(!strcmp(commands[0],"mkdir"))
@@ -103,14 +99,10 @@ int main()
 
 	while(1)
 	{
-    /*Acrescentei o vetor 'usuario' na chamada do prompt*/
 		line = type_prompt(usuario);
 		add_history(line);
 		commands = comando(line,&args);
 		read_commad(commands);
-		//printf("%s\n");
-		/*for(int i = 0; i < args; i++) free(commands[i]);*/
-		/*printf("%s\n",a);*/
 		free(line);
 	}
 }

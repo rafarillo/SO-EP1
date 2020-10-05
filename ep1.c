@@ -5,11 +5,7 @@
 #include <time.h>
 #include <sched.h>
 #include "List.h"
-/*
-Problemas ainda a resolver
-Calculo do tempo real não só quando há um processo na Thread,
-Como intercalar o calculo do tempo (sleep) dentro da thread e fora da thread?
-*/
+
 Fila circular;
 List processos;
 int tempoAtual = 0;
@@ -17,7 +13,6 @@ int isThread = 0;
 int isMenor = 0;
 int idExecutando = -1;
 double quantum = 3;
-/* Rafa*/
 int d = 0;
 int contexto = 0;
 
@@ -27,8 +22,7 @@ pthread_mutex_t mutex;
 
 
 
-// Essa funcao le o arquivo s e criar uma lista ligada para guardar as informacoes dos processos
-
+/*Essa funcao le o arquivo 's' e cria uma lista ligada para guardar as informacoes dos processos*/
 List  lista_de_processos(const char *s)
 {
 	int k = 0;
@@ -53,18 +47,16 @@ List  lista_de_processos(const char *s)
 	return processos;
 }
 
-
+/*Funcao do escalonador FCFS onde enviamos as threads*/
 void * FCFS(void * i)
 {
 	int j = 1;
 	int * P_i = (int *) i;
 	long int count = 2;
 	Cell thread = at(*P_i,processos);
-	int dt = thread->x.dt;
 	isThread++;
 	pthread_mutex_lock(&mutex);
 	if(d) fprintf(stderr,"Sou o processo %s usando a cpu%d\n",thread->x.nome,sched_getcpu());
-	printf("Sou o processo %s\n",thread->x.nome);
 
 	/*Seção Crítica*/
 	while(thread->x.dt > 0)
@@ -72,15 +64,12 @@ void * FCFS(void * i)
 		if( j % 10 == 0) {
 			count*=count;
 			thread->x.dt--;
-			printf("Tempo Atual: %d\n", tempoAtual);
 			tempoAtual++;
 		}
 		nanosleep(&ts, NULL);
 		j++;
 	}
 	pthread_mutex_unlock(&mutex);
-
-	/*Implementação do Rafa*/
 	thread->x.tf = tempoAtual;
 	thread->x.tr = thread->x.tf - thread->x.t0;
 	contexto++;
@@ -90,17 +79,16 @@ void * FCFS(void * i)
 		fprintf(stderr, "%d mudancas de contexto \n",contexto );
 	}
 	isThread--;
-	printf("Encerrado Processo: %s -- Incrivel passaram-se %d segundos\n",thread->x.nome, dt);
 	return NULL;
 }
 
+/*Funcao do escalonador SRTN onde enviamos as threads*/
 void * SRTN(void * i)
 {
 	int j = 1;
 	int * P_i = (int *) i;
 	long int count = 2;
 	Cell thread = at(*P_i,processos);
-	int dt = thread->x.dt;
 	isThread++;
 	while(idExecutando != thread->x.id) {
 		nanosleep(&ts, NULL);
@@ -109,14 +97,13 @@ void * SRTN(void * i)
 	if(d) fprintf(stderr,"Sou o processo %s usando a cpu%d\n",thread->x.nome,sched_getcpu());
 	isMenor = 0;
 
-	printf("Sou o processo %s\n",thread->x.nome);
-
 	/*Seção Crítica*/
 	while(thread->x.dt > 0)
 	{
 		if (isMenor) {
 			isMenor = 0;
 			pthread_mutex_unlock(&mutex);
+			comtexto++;
 			while(idExecutando != thread->x.id) {
 				nanosleep(&ts, NULL);
 			}
@@ -124,7 +111,6 @@ void * SRTN(void * i)
 		if( j % 10 == 0) {
 			count*=count;
 			thread->x.dt--;
-			printf("Tempo Atual: %d\n", tempoAtual);
 			tempoAtual++;
 		}
 		nanosleep(&ts, NULL);
@@ -132,7 +118,7 @@ void * SRTN(void * i)
 	}
 	pthread_mutex_unlock(&mutex);
 	idExecutando = thread->x.idAnterior;
-	/*Implementação do Rafa*/
+
 	thread->x.tf = tempoAtual;
 	thread->x.tr = thread->x.tf - thread->x.t0;
 	contexto++;
@@ -142,17 +128,15 @@ void * SRTN(void * i)
 		fprintf(stderr, "%d mudancas de contexto \n",contexto );
 	}
 	isThread--;
-	printf("Encerrado Processo: %s -- Incrivel passaram-se %d segundos\n",thread->x.nome, dt);
 	return NULL;
 }
-
+/*Funcao do escalonador ROUND ROBIN onde enviamos as threads*/
 void * RR(void * i)
 {
 	int j = 1;
 	int * P_i = (int *) i;
 	long int count = 2;
 	Cell thread = at(*P_i,processos);
-	int dt = thread->x.dt;
 	isThread++;
 
 	while(idExecutando != thread->x.id) {
@@ -160,12 +144,12 @@ void * RR(void * i)
 	}
 	pthread_mutex_lock(&mutex);
 	if(d) fprintf(stderr,"Sou o processo %s usando a cpu%d\n",thread->x.nome,sched_getcpu());
-	printf("Sou o processo %s\n",thread->x.nome);
 
 	/*Seção Crítica*/
 	while(thread->x.dt > 0)
 	{
 		if (thread->x.tquantum == quantum) {
+			contexto++;
 			thread->x.tquantum = 0;
 			proximoNode(circular);
 			idExecutando = circular->current->celula->x.id;
@@ -177,7 +161,7 @@ void * RR(void * i)
 		if( j % 10 == 0) {
 			count*=count;
 			thread->x.dt--;
-			printf("Tempo Atual: %d --- Processo %s\n", tempoAtual, thread->x.nome);
+			printf("+Tempo Atual %d\n", tempoAtual);
 			tempoAtual++;
 			thread->x.tquantum++;
 		}
@@ -186,7 +170,6 @@ void * RR(void * i)
 	}
 	pthread_mutex_unlock(&mutex);
 	isThread--;
-	/*Implementação do Rafa*/
 	thread->x.tf = tempoAtual;
 	thread->x.tr = thread->x.tf - thread->x.t0;
 	contexto++;
@@ -197,7 +180,6 @@ void * RR(void * i)
 	}
 	retiraNodeFilaCircular(circular);
 	idExecutando = circular->current->celula->x.id;
-	printf("Encerrado Processo: %s --- no tempo: %d --- Incrivel passaram-se %d segundos\n",thread->x.nome, tempoAtual, dt);
 	return NULL;
 }
 
@@ -232,19 +214,21 @@ int main(int argc, char const *argv[])
 	/*CHAMADA PARA O FCFS*/
 	if (qualEscalonador == 1) {
 		while (i < processos->N) {
+			/*Pega o i-ésimo processo*/
 			processoAtual = at(i,processos);
+			/*Confere se o t0 do processoAtual é equivalente ao tempoAtual*/
 			if(processoAtual->x.t0 == tempoAtual) {
 				if(d)  fprintf(stderr,"Processo %s %d %d %d pede acesso -- no tempo: %d\n", processoAtual->x.nome,processoAtual->x.t0,processoAtual->x.dt,processoAtual->x.deadline ,tempoAtual);
-				printf("Processo %s pede acesso -- no tempo: %d\n", processoAtual->x.nome, tempoAtual);
 				if (pthread_create(&thread[i], NULL, FCFS, (void*)&i)) {
 						printf("\n ERROR creating thread %d\n",i);
 						exit(1);
 				}
 				nanosleep(&tsrr, NULL);
 				i++;
-			} else if (isThread == 0){
+			}
+			/*Caso não haja algum processo sendo executado na thread, conte o tempo*/
+			else if (isThread == 0){
 				sleep(1);
-				printf("---Tempo Atual: %d\n", tempoAtual);
 				tempoAtual++;
 			}
 		}
@@ -254,29 +238,32 @@ int main(int argc, char const *argv[])
 						exit(1);
 			}
 		}
-		printf("\n\n%d\n", tempoAtual);
 	}
 	/* CHAMADA PARA O SRTN */
 	else if (qualEscalonador == 2) {
 
 		while (i < processos->N) {
+			/*Pega o i-ésimo processo*/
 			processoAtual = at(i,processos);
+			/*Confere se o t0 do processoAtual é equivalente ao tempoAtual*/
 			if(processoAtual->x.t0 == tempoAtual) {
 				if(d)  fprintf(stderr,"Processo %s %d %d %d pede acesso -- no tempo: %d\n", processoAtual->x.nome,processoAtual->x.t0,processoAtual->x.dt,processoAtual->x.deadline ,tempoAtual);
-				printf("Processo %s pede acesso -- no tempo: %d\n", processoAtual->x.nome, tempoAtual);
-				/*Caso não haja nenhuma thread sendo executada*/
+				/*Caso não haja nenhuma thread sendo executada, execute o processo atual*/
 				if (isThread == 0) {
 					idExecutando = processoAtual->x.id;
 					processoAtual->x.idAnterior = -1;
 					executando = processoAtual;
 				}
-				/*Compara dt do processoAtual que chegou com o processo que está sendo executado.*/
+				/*Compara dt do processoAtual que chegou, com o processo que está sendo executado.*/
+				/*Caso dt de processo atual seja menor, execute o processo, e mande o que estava sendo executado, para segundo da fila*/
 				else if (processoAtual->x.dt < executando->x.dt) {
 					processoAtual->x.idAnterior = idExecutando;
 					idExecutando = processoAtual->x.id;
 					executando = processoAtual;
 					isMenor = 1;
-				} else if (processoAtual->x.dt >= executando->x.dt) {
+				}
+				/*Caso dt de processo atual seja maior, mande o processo atual para o fim da fila*/
+				else if (processoAtual->x.dt >= executando->x.dt) {
 					if (executando->x.idAnterior == -1) {
 						executando->x.idAnterior = processoAtual->x.id;
 						processoAtual->x.idAnterior = -1;
@@ -295,9 +282,10 @@ int main(int argc, char const *argv[])
 				}
 				nanosleep(&tsrr, NULL);
 				i++;
-			} else if (isThread == 0){
+			}
+			/*Caso não haja algum processo sendo executado na thread, conte o tempo*/
+			else if (isThread == 0){
 				sleep(1);
-				printf("---Tempo Atual: %d\n", tempoAtual);
 				tempoAtual++;
 			}
 		}
@@ -307,20 +295,21 @@ int main(int argc, char const *argv[])
 						exit(1);
 			}
 		}
-		printf("\n\n%d\n", tempoAtual);
 	}
 
 	/*CHAMADA PARA O RR*/
 	else {
 		while (i < processos->N) {
+			/*Pega o i-ésimo processo*/
 			processoAtual = at(i,processos);
+
+			/*Confere se o t0 do processoAtual é equivalente ao tempoAtual*/
 			if(processoAtual->x.t0 == tempoAtual) {
 				if(d)  fprintf(stderr,"Processo %s %d %d %d pede acesso -- no tempo: %d\n", processoAtual->x.nome,processoAtual->x.t0,processoAtual->x.dt,processoAtual->x.deadline ,tempoAtual);
-				printf("\nProcesso %s pede acesso -- no tempo: %d\n", processoAtual->x.nome, tempoAtual);
-				/*Ponho na fila circular*/
+
 				addProcessoFilaCircular(processoAtual, circular);
 
-				/*Se não há ninguém na thread*/
+				/*Se não há processo sendo executado na thread, mande o próximo processo*/
 				if (isThread == 0) {
 					proximoNode(circular);
 					idExecutando = circular->current->celula->x.id;
@@ -332,9 +321,10 @@ int main(int argc, char const *argv[])
 				nanosleep(&tsrr, NULL);
 				i++;
 			}
+			/*Caso não haja algum processo sendo executado na thread, conte o tempo*/
 			else if (isThread == 0){
 				sleep(1);
-				printf("---Tempo Atual: %d\n", tempoAtual);
+				printf("Tempo Atual %d\n", tempoAtual);
 				tempoAtual++;
 			}
 		}
@@ -348,11 +338,8 @@ int main(int argc, char const *argv[])
 
 	time_t end;
 	time(&end);
-
-	printf("Passaram-se %lf segundos\n",difftime(end,begin));
 	pthread_mutex_destroy(&mutex);
 
-/* Rafa */
 	FILE *f = fopen(argv[3],"w");
 	if(f == NULL)
 	{
@@ -365,7 +352,7 @@ int main(int argc, char const *argv[])
 	fprintf(f, "%d\n",contexto );
 
 	fclose(f);
-
 	free_list(processos);
+	filaFree(circular);
 	return 0;
 }

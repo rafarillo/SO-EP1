@@ -56,7 +56,6 @@ void free_list(List l)
 
 
 /*Rotinas Para fila circular*/
-
 Fila filaInit() {
 
   Fila fila = mallocSafe(sizeof(*fila));
@@ -87,24 +86,6 @@ void addProcessoFilaCircular(Cell p, Fila fila) {
   if (fila->current == fila->cabeca) {
     fila->current = fila->cabeca->next;
   }
-}
-
-/*Caso precise*/
-// void imprimeFila (Fila fila, int i) {
-//   Link no;
-//   no = fila->cabeca->next;
-//   while(no != fila->cabeca && no != NULL) {
-//     imprimeProcesso(no->processo, i);
-//     no = no->next;
-//   }
-// }
-
-int filaSize(Fila fila) {
-  return fila->n;
-}
-
-bool filaIsEmpty(Fila fila) {
-  return fila->n == 0;
 }
 
 void retiraNodeFilaCircular(Fila fila) {

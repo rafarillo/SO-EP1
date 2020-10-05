@@ -11,12 +11,21 @@ struct list
 	Cell ini;
 	int N;
 };
-
+/*Cria lista dos processos*/
 List create_list();
+
+/*Adiciona uma célula à lista*/
 void addCell(data x,List l);
+
+/*Retira o i-esimo elemento da lista*/
 Cell  at(int i, List l);
+
+/*Imprime lista*/
 void dump_list();
+
+/*Destrutor*/
 void free_list(List l);
+
 int number_elements();
 
 /*Definição para Fila circular dos processos*/
@@ -34,15 +43,6 @@ Fila filaInit();
 
 /*Adiciona Processo na Fila da CPU*/
 void addProcessoFilaCircular(Cell, Fila);
-
-/*Imprime a fila em determinado UT*/
-// void imprimeFila(Fila, int);
-
-/*Retorna o tamanho da Fila*/
-int filaSize(Fila);
-
-/*Devolve true se a fila está vazia*/
-bool filaIsEmpty(Fila);
 
 /*Retira processo da fila da CPU*/
 void retiraNodeFilaCircular(Fila);
