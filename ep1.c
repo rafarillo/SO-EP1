@@ -103,7 +103,7 @@ void * SRTN(void * i)
 		if (isMenor) {
 			isMenor = 0;
 			pthread_mutex_unlock(&mutex);
-			comtexto++;
+			contexto++;
 			while(idExecutando != thread->x.id) {
 				nanosleep(&ts, NULL);
 			}
@@ -161,7 +161,6 @@ void * RR(void * i)
 		if( j % 10 == 0) {
 			count*=count;
 			thread->x.dt--;
-			printf("+Tempo Atual %d\n", tempoAtual);
 			tempoAtual++;
 			thread->x.tquantum++;
 		}
